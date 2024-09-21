@@ -46,6 +46,27 @@ const AppProvider = ({ children }) => {
         }
     };
 
+    const disconnectWallet = () => {
+        setError("");
+        if (checkEthereumExists()) {
+            try {
+                ethereum.request({
+                    method: "wallet_revokePermissions",
+                    params: [
+                        {
+                            eth_accounts: {},
+                        },
+                    ],
+                });
+                setAccount("");
+            }
+            catch (err) {
+                setError(err.message);
+            }
+
+        }
+    };
+
     useEffect(() => {
         if (checkEthereumExists()) {
             ethereum.on("accountsChanged", getConnectedAccounts);
@@ -59,7 +80,7 @@ const AppProvider = ({ children }) => {
 
     return (
         <AppContext.Provider
-            value={{ account, connectWallet, error }}
+            value={{ account, connectWallet, disconnectWallet, error }}
         >
             {children}
         </AppContext.Provider>

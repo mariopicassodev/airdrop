@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useContext } from "react";
 import { AppContext } from "./context/AppContext";
 export default function Home() {
-    const { account, connectWallet, error } = useContext(AppContext);
+    const { account, connectWallet, disconnectWallet, error } = useContext(AppContext);
     return (
         <div className="container">
             <div className="box">
@@ -13,8 +13,13 @@ export default function Home() {
                 </h2>
 
                 {account ? (
-                    <div className="account-box">
-                        <p className="shadow-border">{account}</p>
+                    <div>
+                        <div className="account-box">
+                            <p className="shadow-border">{account}</p>
+                        </div>
+                        <button className="btn shadow-border" onClick={disconnectWallet}>
+                            Disconnect
+                        </button>
                     </div>
                 ) : (
                     <button className="btn shadow-border" onClick={connectWallet}>
