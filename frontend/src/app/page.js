@@ -1,33 +1,47 @@
 'use client';
 
+import { useSDK } from '@metamask/sdk-react';
 import React, { useState } from 'react';
-import { useContext } from "react";
-import { AppContext } from "./context/AppContext";
-export default function Home() {
-    const { account, connectWallet, disconnectWallet, error } = useContext(AppContext);
-    return (
-        <div className="container">
-            <div className="box">
-                <h2>
-                    MetaMask <span className="block">Connect.</span>
-                </h2>
 
-                {account ? (
-                    <div>
-                        <div className="account-box">
-                            <p className="shadow-border">{account}</p>
-                        </div>
-                        <button className="btn shadow-border" onClick={disconnectWallet}>
-                            Disconnect
-                        </button>
-                    </div>
-                ) : (
-                    <button className="btn shadow-border" onClick={connectWallet}>
-                        Connect
+export default function Home() {
+    const { sdk, connected, connecting, provider, chainId, account, balance } = useSDK();
+    const [error, setError] = useState(null);
+
+    const terminate = () => {
+        try {
+            sdk?.terminate();
+        }
+        catch (err) {
+            setError(err);
+            console.warn(`failed to terminate..`, err);
+        }
+    };
+
+    const connect = async () => {
+        try {
+            await sdk?.connect();
+        } catch (err) {
+            console.warn(`failed to connect..`, err);
+            setError(err);
+        }
+    };
+    return (
+        <div className="App">
+            {!account && (
+                <button style={{ padding: 10, margin: 10 }} onClick={connect}>
+                    Connect
+                </button>
+            )}
+            {account && (
+                <div>
+                    <p>{chainId && `Connected chain: ${chainId}`}</p>
+                    <p>{account && `Connected account: ${account}`}</p>
+                    <p>{balance && `Balance: ${balance}`}</p>
+                    <button style={{ padding: 10, margin: 10 }} onClick={terminate}>
+                        Disconnect
                     </button>
-                )}
-                {error && <p className={`error shadow-border`}>{`Error: ${error}`}</p>}
-            </div>
+                </div>
+            )}
         </div>
-    );
+    )
 }
