@@ -1,47 +1,41 @@
 'use client';
 
-import { useSDK } from '@metamask/sdk-react';
 import React, { useState } from 'react';
-
+import { useContext } from "react";
+import { AppContext } from "./context/AppContext";
 export default function Home() {
-    const { sdk, connected, connecting, provider, chainId, account, balance } = useSDK();
-    const [error, setError] = useState(null);
-
-    const terminate = () => {
-        try {
-            sdk?.terminate();
-        }
-        catch (err) {
-            setError(err);
-            console.warn(`failed to terminate..`, err);
-        }
-    };
-
-    const connect = async () => {
-        try {
-            await sdk?.connect();
-        } catch (err) {
-            console.warn(`failed to connect..`, err);
-            setError(err);
-        }
-    };
+    const { account, connectWallet, disconnectWallet, error } = useContext(AppContext);
     return (
-        <div className="App">
-            {!account && (
-                <button style={{ padding: 10, margin: 10 }} onClick={connect}>
-                    Connect
-                </button>
-            )}
-            {account && (
-                <div>
-                    <p>{chainId && `Connected chain: ${chainId}`}</p>
-                    <p>{account && `Connected account: ${account}`}</p>
-                    <p>{balance && `Balance: ${balance}`}</p>
-                    <button style={{ padding: 10, margin: 10 }} onClick={terminate}>
-                        Disconnect
-                    </button>
+        <div className='h-svh'>
+            <div className="navbar bg-base-100">
+                <div className="navbar-start">
+                    <a className="btn btn-ghost text-xl">Airdrop MTK</a>
                 </div>
-            )}
+                <div className="navbar-end">
+                    {account ? (
+                        <a className="btn btn-secondary" onClick={disconnectWallet}>Disconnect</a>
+                    ) : (
+                        <a className="btn btn-primary" onClick={connectWallet}>Connect</a>
+                    )}
+                </div>
+            </div>
+
+            <h1 className="text-6xl text-center">Airdrop MyToken</h1>
+            <div className="flex justify-center items-center h-screen flex-col">
+                {account ? (
+                    <div className="flex justify-center items-center flex-col">
+                    <p>{account}</p>
+                    <p>MTK Balance:</p>
+                    <button className="btn btn-primary">
+                        Claim Airdrop
+                    </button>
+                    </div>
+
+                ) : (
+                    <p>Connect your wallet to get started</p>
+                )}
+                {error && <p className={"text-red-500"}>{`Error: ${error}`}</p>}
+            </div>
         </div>
-    )
+    );
 }
