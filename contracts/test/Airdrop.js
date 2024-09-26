@@ -1,53 +1,82 @@
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
-const { StandardMerkleTree } = require("@openzeppelin/merkle-tree")
-
+const { StandardMerkleTree } = require("@openzeppelin/merkle-tree");
 
 describe("Airdrop", function () {
-    let Airdrop, airdrop, owner, addr1, addr2, addr3, addr4, addr5, addr6, merkleRoot, whitelist_values, tree;
+    let Airdrop, airdrop, owner, addr1, addr2, addr3, addr4, addr5, addr6, merkleRoot, whitelist_values, tree, token;
 
     beforeEach(async function () {
-        Airdrop = await ethers.getContractFactory("Airdrop");
+
+        // Get the signers
         [owner, addr1, addr2, addr3, addr4, addr5, addr6, _] = await ethers.getSigners();
 
-        whitelist_values = [[addr1.address, "500"], [addr2.address, "200"], [addr3.address, "100"], [addr4.address, "100"], [addr5.address, "50"], [addr6.address, "50"]];
+        // Deploy a mock ERC-20 token
+        const name = "MyToken";
+        const symbol = "MTK";
+        const initialBalance = 100000;
+        const Token = await ethers.getContractFactory("ERC20Mock");
+        token = await Token.deploy("MockToken", "MTK", owner.address, initialBalance);
+        await token.waitForDeployment();
+        tokenAddr = await token.getAddress();
+        console.log('Token deployed to:', tokenAddr);
+        console.log('Owner address:' , owner.address);
+        console.log('Token balance:', await token.balanceOf(owner.address));
 
+        // Build the merkle tree with a small whitelist
+        whitelist_values = [
+            [addr1.address, "500"],
+            [addr2.address, "200"],
+            [addr3.address, "100"],
+            [addr4.address, "100"],
+            [addr5.address, "50"],
+            [addr6.address, "50"]
+        ];
         tree = StandardMerkleTree.of(whitelist_values, ["address", "uint256"]);
         merkleRoot = tree.root;
-
         console.log('Merkle Root:', tree.root);
 
-        airdrop = await Airdrop.deploy(merkleRoot);
+        Airdrop = await ethers.getContractFactory("Airdrop");
+        airdrop = await Airdrop.deploy(merkleRoot, tokenAddr);
         await airdrop.waitForDeployment();
-        const contractAddr = await airdrop.getAddress();
-        console.log('Airdrop deployed to:', contractAddr);
+        const AirdropAddr = await airdrop.getAddress();
+        console.log('Airdrop deployed to:', AirdropAddr);
 
+        // Transfer tokens to the airdrop contract
+        await token.transfer(AirdropAddr, 100000);
+
+        // Check the balance of the airdrop contract
+        console.log('Airdrop balance:', await token.balanceOf(AirdropAddr));
     });
 
     it("Should allow a valid claim", async function () {
 
         // Test with addr3
-        const contractAddr = await airdrop.getAddress();
-        const amount = whitelist_values[3][1];
+        console.log("Valid claim user address:", addr3.address);
+
+        // Get the proof for the user
         let proof;
-        
         for (const [i, v] of tree.entries()) {
             if (v[0] === addr3.address) {
                 proof = tree.getProof(i);
             }
         }
 
-        // Send ether to the contract
-        await owner.sendTransaction({ to: contractAddr, value: amount });
+        // Claim the tokens
+        const amount = whitelist_values[3][1];
+        await airdrop.connect(addr3).claim(proof, amount);
 
-        // Perform the claim
-        await expect(airdrop.connect(addr3).claim(proof, amount)).to.changeEtherBalance(addr3, amount);
+        // Check the balance of the user
+        console.log('User balance:', await token.balanceOf(addr3.address));
+        expect(await token.balanceOf(addr3.address)).to.equal(amount);
     });
 
     it("Should reject an invalid proof", async function () {
-        const amount = whitelist_values[0][1];
-        const invalidProof = ["0x0000000000000000000000000000000000000000000000000000000000000000"]; 
 
-        await expect(airdrop.connect(addr1).claim(invalidProof, amount )).to.be.revertedWith("Invalid Merkle proof");
+        // Request with potentially invalid proof
+        const amount = whitelist_values[0][1];
+        const invalidProof = ["0x0000000000000000000000000000000000000000000000000000000000000000"];
+
+        await expect(airdrop.connect(addr1).claim(invalidProof, amount)).to.be.revertedWith("Invalid Merkle proof");
     });
 });
