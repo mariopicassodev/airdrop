@@ -1,12 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useContext } from "react";
+import React, { useContext, useState } from 'react';
 import { AppContext } from "./context/AppContext";
+import useTokenBalance from '../hooks/useTokenBalance';
+import useClaimAirdrop from '../hooks/useClaimAirdrop';
+import { TOKEN_ADDRESS, AIRDROP_ADDRESS } from '../config';
+
 export default function Home() {
     const { account, connectWallet, disconnectWallet, error } = useContext(AppContext);
+    const [balanceUpdated, setBalanceUpdated] = useState(false);
+    const [amount, setAmount] = useState('');
+
+    const balance = useTokenBalance(account, TOKEN_ADDRESS, [balanceUpdated]);
+    const { claimAirdrop, claiming, claimError } = useClaimAirdrop(AIRDROP_ADDRESS);
+
+    const handleClaim = async () => {
+        const merkleProof = [];
+        await claimAirdrop(account, merkleProof, amount);
+        setBalanceUpdated(!balanceUpdated); // Toggle the state to trigger re-fetching the balance
+    };
+
     return (
-        <div className='h-svh'>
+        <div className='min-h-screen flex flex-col overflow-hidden'>
             <div className="navbar bg-base-100">
                 <div className="navbar-start">
                     <a className="btn btn-ghost text-xl">Airdrop MTK</a>
@@ -21,20 +36,30 @@ export default function Home() {
             </div>
 
             <h1 className="text-6xl text-center">Airdrop MyToken</h1>
-            <div className="flex justify-center items-center h-screen flex-col">
+            <div className="flex flex-col justify-between items-center flex-grow">
                 {account ? (
-                    <div className="flex justify-center items-center flex-col">
-                    <p>{account}</p>
-                    <p>MTK Balance:</p>
-                    <button className="btn btn-primary">
-                        Claim Airdrop
-                    </button>
-                    </div>
-
+                    <>
+                        <div className="flex flex-col items-center space-y-4 mt-8">
+                            <button className="btn btn-primary btn-wide" onClick={handleClaim} disabled={claiming}>
+                                {claiming ? 'Claiming...' : 'Claim Airdrop'}
+                            </button>
+                            {claimError && <p className="text-red-500">{`Error: ${claimError}`}</p>}
+                            <input
+                                type="text"
+                                placeholder="Amount"
+                                onChange={(e) => setAmount(e.target.value)}
+                                className="input input-bordered input-primary w-full max-w-xs"
+                            />
+                        </div>
+                        <div className="mt-auto text-center mb-8">
+                            <p>Account: {account}</p>
+                            <p>Balance: {balance !== null ? `${balance} MTK` : 'Loading...'}</p>
+                        </div>
+                    </>
                 ) : (
                     <p>Connect your wallet to get started</p>
                 )}
-                {error && <p className={"text-red-500"}>{`Error: ${error}`}</p>}
+                {error && <p className="text-red-500">{`Error: ${error}`}</p>}
             </div>
         </div>
     );
