@@ -1,5 +1,4 @@
 import "./globals.css";
-import { Providers } from "./providers";
 import AppProvider from "./context/AppContext";
 
 export const metadata = {
@@ -10,8 +9,8 @@ export const metadata = {
 export default function RootLayout({ children }) {
     return (
         <html lang="en">
-            <body>
-                <Providers>{children}</Providers>
+            <body style={{ overflow: 'hidden' }}>
+                <AppProvider>{children}</AppProvider>
             </body>
         </html>
     );

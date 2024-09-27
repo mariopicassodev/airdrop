@@ -1,47 +1,70 @@
 'use client';
 
-import { useSDK } from '@metamask/sdk-react';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
+import { AppContext } from "./context/AppContext";
+import useTokenBalance from '../hooks/useTokenBalance';
+import useClaimAirdrop from '../hooks/useClaimAirdrop';
 
 export default function Home() {
-    const { sdk, connected, connecting, provider, chainId, account, balance } = useSDK();
-    const [error, setError] = useState(null);
+    const { account, connectWallet, disconnectWallet, error } = useContext(AppContext);
+    const [balanceUpdated, setBalanceUpdated] = useState(false);
+    const [amount, setAmount] = useState('');
 
-    const terminate = () => {
-        try {
-            sdk?.terminate();
-        }
-        catch (err) {
-            setError(err);
-            console.warn(`failed to terminate..`, err);
-        }
+    const balance = useTokenBalance(account, [balanceUpdated]);
+
+
+    const { claimAirdrop, claiming, claimError } = useClaimAirdrop();
+
+    const handleClaim = async () => {
+        console.log('Claiming airdrop...');
+        /*
+        const merkleProof = [];
+        await claimAirdrop(account, merkleProof, amount);
+        setBalanceUpdated(!balanceUpdated); // Toggle the state to trigger re-fetching the balance
+        */
     };
 
-    const connect = async () => {
-        try {
-            await sdk?.connect();
-        } catch (err) {
-            console.warn(`failed to connect..`, err);
-            setError(err);
-        }
-    };
     return (
-        <div className="App">
-            {!account && (
-                <button style={{ padding: 10, margin: 10 }} onClick={connect}>
-                    Connect
-                </button>
-            )}
-            {account && (
-                <div>
-                    <p>{chainId && `Connected chain: ${chainId}`}</p>
-                    <p>{account && `Connected account: ${account}`}</p>
-                    <p>{balance && `Balance: ${balance}`}</p>
-                    <button style={{ padding: 10, margin: 10 }} onClick={terminate}>
-                        Disconnect
-                    </button>
+        <div className='min-h-screen flex flex-col overflow-hidden'>
+            <div className="navbar bg-base-100">
+                <div className="navbar-start">
+                    <a className="btn btn-ghost text-xl">Airdrop MTK</a>
                 </div>
-            )}
+                <div className="navbar-end">
+                    {account ? (
+                        <a className="btn btn-secondary" onClick={disconnectWallet}>Disconnect</a>
+                    ) : (
+                        <a className="btn btn-primary" onClick={connectWallet}>Connect</a>
+                    )}
+                </div>
+            </div>
+
+            <h1 className="text-6xl text-center">Airdrop MyToken</h1>
+            <div className="flex flex-col justify-between items-center flex-grow">
+                {account ? (
+                    <>
+                        <div className="flex flex-col items-center space-y-4 mt-8">
+                            <button className="btn btn-primary btn-wide" onClick={handleClaim} disabled={claiming}>
+                                {claiming ? 'Claiming...' : 'Claim Airdrop'}
+                            </button>
+                            {claimError && <p className="text-red-500">{`Error: ${claimError}`}</p>}
+                            <input
+                                type="text"
+                                placeholder="Amount"
+                                onChange={(e) => setAmount(e.target.value)}
+                                className="input input-bordered input-primary w-full max-w-xs"
+                            />
+                        </div>
+                        <div className="mt-auto text-center mb-8">
+                            <p>Account: {account}</p>
+                            <p>Balance: {balance !== null ? `${balance} MTK` : 'Loading...'}</p>
+                        </div>
+                    </>
+                ) : (
+                    <p>Connect your wallet to get started</p>
+                )}
+                {error && <p className="text-red-500">{`Error: ${error}`}</p>}
+            </div>
         </div>
-    )
+    );
 }
