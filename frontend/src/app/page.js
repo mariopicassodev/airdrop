@@ -4,20 +4,24 @@ import React, { useContext, useState } from 'react';
 import { AppContext } from "./context/AppContext";
 import useTokenBalance from '../hooks/useTokenBalance';
 import useClaimAirdrop from '../hooks/useClaimAirdrop';
-import { TOKEN_ADDRESS, AIRDROP_ADDRESS } from '../config';
 
 export default function Home() {
     const { account, connectWallet, disconnectWallet, error } = useContext(AppContext);
     const [balanceUpdated, setBalanceUpdated] = useState(false);
     const [amount, setAmount] = useState('');
 
-    const balance = useTokenBalance(account, TOKEN_ADDRESS, [balanceUpdated]);
-    const { claimAirdrop, claiming, claimError } = useClaimAirdrop(AIRDROP_ADDRESS);
+    const balance = useTokenBalance(account, [balanceUpdated]);
+
+
+    const { claimAirdrop, claiming, claimError } = useClaimAirdrop();
 
     const handleClaim = async () => {
+        console.log('Claiming airdrop...');
+        /*
         const merkleProof = [];
         await claimAirdrop(account, merkleProof, amount);
         setBalanceUpdated(!balanceUpdated); // Toggle the state to trigger re-fetching the balance
+        */
     };
 
     return (

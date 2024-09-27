@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import { BrowserProvider, parseUnits } from "ethers";
+import { tokenContractJSON } from '../contracts-data/ERC20Mock.json';
+import { addressesJSON } from '../contracts-data/local-addresses.json';
 
-const useTokenBalance = (account, tokenAddress) => {
+const useTokenBalance = (account) => {
     const [balance, setBalance] = useState(null);
 
     useEffect(() => {
-        if (!account || !tokenAddress) return;
+        if (!account) return;
 
         const fetchBalance = async () => {
             try {
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const tokenContract = new ethers.Contract(tokenAddress, [
-                    'function balanceOf(address owner) view returns (uint256)'
-                ], provider);
+                const provider = new ethers.BrowserProvider(window.ethereum)
+                const tokenAddress = addressesJSON.token;
+                const tokenContract = new ethers.Contract(tokenAddress, tokenContractJSON.abi, provider);
+
                 const balance = await tokenContract.balanceOf(account);
                 setBalance(ethers.utils.formatEther(balance));
             } catch (error) {
@@ -21,7 +24,7 @@ const useTokenBalance = (account, tokenAddress) => {
         };
 
         fetchBalance();
-    }, [account, tokenAddress]);
+    }, [account]);
 
     return balance;
 };
