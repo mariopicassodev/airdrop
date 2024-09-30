@@ -25,7 +25,7 @@ async function main() {
     const tree = StandardMerkleTree.of(whitelist, ["address", "uint256"]);
     const merkleRoot = tree.root;
     console.log('Merkle Root:', merkleRoot);
-    fs.writeFileSync("./data/local-whitelist-tree.json", JSON.stringify(tree.dump()));
+    fs.writeFileSync("./scripts/outputs/local-whitelist-tree.json", JSON.stringify(tree.dump()));
 
     // Deploy the Airdrop contract
     const Airdrop = await ethers.getContractFactory("Airdrop", wallet);
@@ -34,6 +34,13 @@ async function main() {
     await airdrop.waitForDeployment();
     const airdropAddr = await airdrop.getAddress();
     console.log('Airdrop deployed to:', airdropAddr);
+
+    // Write a json with the contract addresses
+    const addresses = {
+        token: tokenAddr,
+        airdrop: airdropAddr
+    };
+    fs.writeFileSync("./scripts/outputs/local-addresses.json", JSON.stringify(addresses));
 
     // Transfer tokens to the airdrop contract
     console.log('Transferring tokens to Airdrop contract...');
