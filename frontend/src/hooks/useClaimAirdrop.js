@@ -10,12 +10,8 @@ const useClaimAirdrop = (airdropAddress) => {
         setClaimError(null);
 
         try {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            const airdropContract = new ethers.Contract(airdropAddress, [
-                'function claim(bytes32[] calldata merkleProof, uint256 amount) external'
-            ], signer);
-
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const airdropContract = new ethers.Contract(airdropAddress, airdropJSON.abi, provider);
             const tx = await airdropContract.claim(merkleProof, amount);
             await tx.wait();
         } catch (error) {

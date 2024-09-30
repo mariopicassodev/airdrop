@@ -10,7 +10,7 @@ export default function Home() {
     const [balanceUpdated, setBalanceUpdated] = useState(false);
     const [amount, setAmount] = useState('');
 
-    const balance = useTokenBalance(account, [balanceUpdated]);
+    const balance = useTokenBalance(account, balanceUpdated);
 
 
     const { claimAirdrop, claiming, claimError } = useClaimAirdrop();

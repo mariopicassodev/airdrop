@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { BrowserProvider, parseUnits } from "ethers";
-import { tokenContractJSON } from '../contracts-data/ERC20Mock.json';
-import { addressesJSON } from '../contracts-data/local-addresses.json';
+import ERC20JSON from '../contracts-data/ERC20Mock.json';
+import localAddresses from '../contracts-data/local-addresses.json';
 
-const useTokenBalance = (account) => {
+const useTokenBalance = (account, balanceUpdated) => {
     const [balance, setBalance] = useState(null);
 
     useEffect(() => {
@@ -13,18 +12,19 @@ const useTokenBalance = (account) => {
         const fetchBalance = async () => {
             try {
                 const provider = new ethers.BrowserProvider(window.ethereum)
-                const tokenAddress = addressesJSON.token;
-                const tokenContract = new ethers.Contract(tokenAddress, tokenContractJSON.abi, provider);
-
+                const tokenAddress = localAddresses.token;
+                console.log('Token address:', tokenAddress);
+                const tokenContract = new ethers.Contract(tokenAddress, ERC20JSON.abi, provider);
+                console.log('Fetching balance for account:', account, tokenContract);
                 const balance = await tokenContract.balanceOf(account);
-                setBalance(ethers.utils.formatEther(balance));
+                setBalance(balance.toString());
             } catch (error) {
                 console.error('Failed to fetch balance:', error);
             }
         };
 
         fetchBalance();
-    }, [account]);
+    }, [account, balanceUpdated]);
 
     return balance;
 };
