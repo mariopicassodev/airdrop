@@ -20,7 +20,7 @@ describe("Airdrop", function () {
         await token.waitForDeployment();
         tokenAddr = await token.getAddress();
         console.log('Token deployed to:', tokenAddr);
-        console.log('Owner address:' , owner.address);
+        console.log('Owner address:', owner.address);
         console.log('Token balance:', await token.balanceOf(owner.address));
 
         // Build the merkle tree with a small whitelist
@@ -63,20 +63,52 @@ describe("Airdrop", function () {
         }
 
         // Claim the tokens
-        const amount = whitelist_values[3][1];
-        await airdrop.connect(addr3).claim(proof, amount);
+        const totalAmount = whitelist_values[3][1];
+        await airdrop.connect(addr3).claim(proof, totalAmount, totalAmount);
 
         // Check the balance of the user
         console.log('User balance:', await token.balanceOf(addr3.address));
-        expect(await token.balanceOf(addr3.address)).to.equal(amount);
+        expect(await token.balanceOf(addr3.address)).to.equal(totalAmount);
     });
+
+    it("Should allow valid claims with partial amounts", async function () {
+
+        // Test with addr3
+        console.log("Valid claim user address:", addr3.address);
+
+        // Get the proof for the user
+        let proof;
+        for (const [i, v] of tree.entries()) {
+            if (v[0] === addr3.address) {
+                proof = tree.getProof(i);
+            }
+        }
+
+        // Claim the tokens
+        const totalAmount = whitelist_values[3][1];
+        const partialAmount = totalAmount / 2;
+        await airdrop.connect(addr3).claim(proof, totalAmount, partialAmount);
+
+        // Check the balance of the user
+        console.log('User balance:', await token.balanceOf(addr3.address));
+        expect(await token.balanceOf(addr3.address)).to.equal(partialAmount);
+
+        // Claim the remaining tokens
+        await airdrop.connect(addr3).claim(proof, totalAmount, partialAmount);
+
+        // Check the balance of the user
+        console.log('User balance:', await token.balanceOf(addr3.address));
+        expect(await token.balanceOf(addr3.address)).to.equal(totalAmount);
+    });
+
 
     it("Should reject an invalid proof", async function () {
 
         // Request with potentially invalid proof
-        const amount = whitelist_values[0][1];
+        const totalAmount = whitelist_values[0][1];
+        const partialAmount = totalAmount / 2;
         const invalidProof = ["0x0000000000000000000000000000000000000000000000000000000000000000"];
 
-        await expect(airdrop.connect(addr1).claim(invalidProof, amount)).to.be.revertedWith("Invalid Merkle proof");
+        await expect(airdrop.connect(addr1).claim(invalidProof, totalAmount, partialAmount)).to.be.revertedWith("Invalid Merkle proof");
     });
 });
