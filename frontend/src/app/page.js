@@ -4,6 +4,7 @@ import React, { useContext, useState } from 'react';
 import { AppContext } from "../context/AppContext";
 import useTokenBalance from '../hooks/useTokenBalance';
 import useClaimAirdrop from '../hooks/useClaimAirdrop';
+import useAvaibleClaimAmount from '@/hooks/useAvaibleClaimAmount';
 import Toast from "../components/Toast";
 
 export default function Home() {

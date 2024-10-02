@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import localAddresses from '../contracts-data/local-addresses.json';
-import airdropJSON from '../contracts-data/airdrop.json';
-import whitelist from '../contracts-data/test-local-whitelist.json';
+import airdropJSON from '../contracts-data/Airdrop.json';
+import merkleTreeJSON from '../contracts-data/local-whitelist-tree.json';
+import { getProofAndTotalAmount } from "@/utils/merkle-tree";
+import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 
 const useAvaibleClaimAmount = (account, balanceUpdated) => {
     const [avaibleAmount, setAvaibleAmount] = useState(null);
@@ -15,10 +17,19 @@ const useAvaibleClaimAmount = (account, balanceUpdated) => {
                 const provider = new ethers.BrowserProvider(window.ethereum);
                 const airdropContract = new ethers.Contract(localAddresses.airdrop, airdropJSON.abi, provider);
                 const claimedAmount = await airdropContract.getClaimedAmount(account);
-                const totalAmount = whitelist.reduce((result, whitelistValue) => whitelistValue[0] === account ? result : whitelistValue[1] , null);
-                const avaibleAmount = totalAmount - claimedAmount;
+                const merkleTree = StandardMerkleTree.load(merkleTreeJSON);
+                const { proof, totalAmount } = getProofAndTotalAmount(merkleTree, account);
 
-                setAvaibleAmount(avaibleAmount.toString());
+                // Convert claimedAmount and totalAmount to BigInt
+                const claimedAmountBigInt = BigInt(claimedAmount.toString());
+                const totalAmountBigInt = BigInt(totalAmount.toString());
+
+                // Perform arithmetic operation using BigInt
+                const avaibleAmountBigInt = totalAmountBigInt - claimedAmountBigInt;
+
+                // Convert avaibleAmountBigInt to string before setting state
+                setAvaibleAmount(avaibleAmountBigInt.toString());
+
             } catch (error) {
                 console.error('Failed to fetch avaible amount:', error);
             }

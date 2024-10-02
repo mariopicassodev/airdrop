@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { ethers } from 'ethers';
 import { StandardMerkleTree } from '@openzeppelin/merkle-tree'
 import addresses from '../contracts-data/local-addresses.json';
-import airdropJSON from '../contracts-data/airdrop.json';
+import airdropJSON from '../contracts-data/Airdrop.json';
 import merkleTreeJSON from '../contracts-data/local-whitelist-tree.json';
+import { getProofAndTotalAmount } from '@/utils/merkle-tree';
 
 
 
@@ -17,16 +18,7 @@ const useClaimAirdrop = (airdropAddress) => {
 
         try {
             const merkleTree = StandardMerkleTree.load(merkleTreeJSON);
-            let merkleProof;
-            let totalAmount;
-
-            for (const [i, v] of merkleTree.entries()) {
-                if (v[0] === account) {
-                    merkleProof = merkleTree.getProof(i);
-                    totalAmount = v[1];
-                }
-            }
-
+            const { merkleProof, totalAmount } = getProofAndTotalAmount(merkleTree, account);
             const provider = new ethers.BrowserProvider(window.ethereum);
             const airdropContract = new ethers.Contract(addresses.airdrop, airdropJSON.abi, provider);
             const tx = await airdropContract.claim(merkleProof, totalAmount, partialAmount);
@@ -39,7 +31,7 @@ const useClaimAirdrop = (airdropAddress) => {
         }
     };
 
-    return { claimAirdrop, claiming, claimError };
+    return { claimAirdrop, claiming, claimError, claimSuccess };
 };
 
 export default useClaimAirdrop;
