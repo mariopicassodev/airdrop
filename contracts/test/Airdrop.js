@@ -101,6 +101,75 @@ describe("Airdrop", function () {
         expect(await token.balanceOf(addr3.address)).to.equal(totalAmount);
     });
 
+    it("Should reject a claim with an invalid amount", async function () {
+
+        // Test with addr3
+        console.log("Valid claim user address:", addr3.address);
+
+        // Get the proof for the user
+        let proof;
+        for (const [i, v] of tree.entries()) {
+            if (v[0] === addr3.address) {
+                proof = tree.getProof(i);
+            }
+        }
+
+        // Claim the tokens
+        const totalAmount = whitelist_values[3][1];
+        const invalidAmount = totalAmount * 2;
+        await expect(airdrop.connect(addr3).claim(proof, totalAmount, invalidAmount)).to.be.revertedWith("Partial amount is greater than total amount");
+    });
+
+    it("Should reject a claim with paused contract", async function () {
+
+        // Pause the contract
+        await airdrop.pause();
+
+        // Test with addr3
+        console.log("Valid claim user address:", addr3.address);
+
+        // Get the proof for the user
+        let proof;
+        for (const [i, v] of tree.entries()) {
+            if (v[0] === addr3.address) {
+                proof = tree.getProof(i);
+            }
+        }
+
+        // Claim the tokens
+        const totalAmount = whitelist_values[3][1];
+        await expect(airdrop.connect(addr3).claim(proof, totalAmount, totalAmount)).to.be.revertedWith("Contract is paused");
+    });
+
+    it("Should reject a claim with invalid proof", async function () {
+
+        // Test with addr3
+        console.log("Valid claim user address:", addr3.address);
+
+        // Get the proof for the user
+        let proof;
+        for (const [i, v] of tree.entries()) {
+            if (v[0] === addr3.address) {
+                proof = tree.getProof(i);
+            }
+        }
+
+        console.log(proof);
+
+        // Modify the first character of the first proof element
+        if (proof && proof.length > 0) {
+            let modifiedProof = proof[0].split('');
+            modifiedProof[3] = modifiedProof[3] === '0' ? '1' : '0'; // Example modification
+            proof[0] = modifiedProof.join('');
+        }
+
+        console.log(proof);
+
+
+        // Claim the tokens
+        const totalAmount = whitelist_values[3][1];
+        await expect(airdrop.connect(addr3).claim(proof, totalAmount, totalAmount)).to.be.revertedWith("Invalid Merkle proof");
+    });
 
     it("Should reject an invalid proof", async function () {
 
