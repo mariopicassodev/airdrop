@@ -1,27 +1,34 @@
 'use client';
 
 import React, { useContext, useState } from 'react';
-import { AppContext } from "./context/AppContext";
+import { AppContext } from "../context/AppContext";
 import useTokenBalance from '../hooks/useTokenBalance';
 import useClaimAirdrop from '../hooks/useClaimAirdrop';
+import Toast from "../components/Toast";
 
 export default function Home() {
     const { account, connectWallet, disconnectWallet, error } = useContext(AppContext);
     const [balanceUpdated, setBalanceUpdated] = useState(false);
     const [amount, setAmount] = useState('');
+    const [toast, setToast] = useState({ message: "", type: "", visible: false });
+
 
     const balance = useTokenBalance(account, balanceUpdated);
-
-
-    const { claimAirdrop, claiming, claimError } = useClaimAirdrop();
+    const avaibleAmount = useAvaibleClaimAmount(account);
+    const { claimAirdrop, claiming, claimError, claimSuccess } = useClaimAirdrop();
 
     const handleClaim = async () => {
         console.log('Claiming airdrop...');
-        /*
-        const merkleProof = [];
-        await claimAirdrop(account, merkleProof, amount);
+        await claimAirdrop(account, amount);
+        if (claimSuccess) {
+            setToast({ message: "Airdrop claimed", type: "success", visible: true });
+        }
         setBalanceUpdated(!balanceUpdated); // Toggle the state to trigger re-fetching the balance
-        */
+
+    }
+
+    const handleCloseToast = () => {
+        setToast({ ...toast, visible: false });
     };
 
     return (
@@ -57,6 +64,7 @@ export default function Home() {
                         </div>
                         <div className="mt-auto text-center mb-8">
                             <p>Account: {account}</p>
+                            <p>Avaible to claim: {avaibleAmount}</p>
                             <p>Balance: {balance !== null ? `${balance} MTK` : 'Loading...'}</p>
                         </div>
                     </>
@@ -65,6 +73,7 @@ export default function Home() {
                 )}
                 {error && <p className="text-red-500">{`Error: ${error}`}</p>}
             </div>
+            <Toast message="Airdrop claimed" type="success" visible={false} onClose={handleCloseToast} />
         </div>
     );
 }

@@ -1,5 +1,5 @@
 import "./globals.css";
-import AppProvider from "./context/AppContext";
+import AppProvider from "../context/AppContext";
 
 export const metadata = {
     title: "Airdrop",
