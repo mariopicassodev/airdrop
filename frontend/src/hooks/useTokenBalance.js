@@ -17,6 +17,7 @@ const useTokenBalance = (account, balanceUpdated) => {
                 const tokenContract = new ethers.Contract(tokenAddress, ERC20JSON.abi, provider);
                 console.log('Fetching balance for account:', account, tokenContract);
                 const balance = await tokenContract.balanceOf(account);
+                console.log('Balance:', balance.toString());
                 setBalance(balance.toString());
             } catch (error) {
                 console.error('Failed to fetch balance:', error);

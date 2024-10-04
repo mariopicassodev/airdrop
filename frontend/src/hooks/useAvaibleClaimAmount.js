@@ -1,25 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import localAddresses from '../contracts-data/local-addresses.json';
-import airdropJSON from '../contracts-data/airdrop.json';
-import whitelist from '../contracts-data/test-local-whitelist.json';
+import airdropJSON from '../contracts-data/Airdrop.json';
+import { getProofAndTotalAmount } from "@/utils/merkle-tree";
+import { NO_MATCHING_ACCOUNT_ERROR } from "@/utils/constants";
+
 
 const useAvaibleClaimAmount = (account, balanceUpdated) => {
     const [avaibleAmount, setAvaibleAmount] = useState(null);
+    const [elgibilityError, setElgibilityError] = useState(null);
 
     useEffect(() => {
         if (!account) return;
 
         const fetchAvaibleAmount = async () => {
+            setElgibilityError(null);
             try {
                 const provider = new ethers.BrowserProvider(window.ethereum);
                 const airdropContract = new ethers.Contract(localAddresses.airdrop, airdropJSON.abi, provider);
                 const claimedAmount = await airdropContract.getClaimedAmount(account);
-                const totalAmount = whitelist.reduce((result, whitelistValue) => whitelistValue[0] === account ? result : whitelistValue[1] , null);
-                const avaibleAmount = totalAmount - claimedAmount;
 
-                setAvaibleAmount(avaibleAmount.toString());
+
+                const { proof, totalAmount } = getProofAndTotalAmount(account);
+
+                // Convert claimedAmount and totalAmount to BigInt
+                const claimedAmountBigInt = BigInt(claimedAmount.toString());
+                const totalAmountBigInt = BigInt(totalAmount.toString());
+
+                console.log(claimedAmountBigInt, totalAmountBigInt)
+
+                // Perform arithmetic operation using BigInt
+                const avaibleAmountBigInt = totalAmountBigInt - claimedAmountBigInt;
+                console.log("avaible ammount: " + avaibleAmountBigInt);
+
+                // Convert avaibleAmountBigInt to string before setting state
+                setAvaibleAmount(avaibleAmountBigInt.toString());
+
             } catch (error) {
+                if (error.code === NO_MATCHING_ACCOUNT_ERROR) {
+                    setElgibilityError("You are not eligible for the airdrop");
+                }
+                setAvaibleAmount("0");
                 console.error('Failed to fetch avaible amount:', error);
             }
         };
@@ -27,7 +48,7 @@ const useAvaibleClaimAmount = (account, balanceUpdated) => {
         fetchAvaibleAmount();
     }, [account, balanceUpdated]);
 
-    return avaibleAmount;
+    return { avaibleAmount, elgibilityError };
 };
 
 export default useAvaibleClaimAmount;

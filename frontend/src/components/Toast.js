@@ -12,6 +12,9 @@ export default function Toast({ message, type, visible, onClose }) {
         }
     }, [visible, onClose]);
 
+
+    console.log('Toast:', message, type, visible);
+
     if (!visible) return null;
 
     if (type === "error") {
@@ -25,6 +28,7 @@ export default function Toast({ message, type, visible, onClose }) {
     }
 
     else if (type === "success") {
+        console.log('success toast');
         return (
             <div className="toast toast-bottom toast-end z-50">
                 <div className="alert alert-success">
