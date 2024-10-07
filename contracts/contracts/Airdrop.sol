@@ -9,6 +9,8 @@ contract Airdrop is Ownable {
     bool private paused;
     mapping(address => uint256) public withdrawnAmount;
     IERC20 public token;
+    uint256 public totalClaimedAmount;
+    event Claimed(address indexed account, uint256 amount);
 
     constructor(bytes32 _merkleRoot, address _tokenAddress) Ownable(msg.sender) {
         merkleRoot = _merkleRoot;
@@ -36,11 +38,23 @@ contract Airdrop is Ownable {
 
         // Transfer the ERC-20 tokens
         require(token.transfer(msg.sender, partialAmount), "Token transfer failed");
+
+        // Save the total claimed amount
+        totalClaimedAmount += partialAmount;
+
+        emit Claimed(msg.sender, partialAmount);
     }
 
     function getClaimedAmount(address _address) public view returns (uint256) {
         return withdrawnAmount[_address];
     }
+
+
+    // Function to get the sum of claimed tokens
+    function getTotalClaimedAmount() public view returns (uint256) {
+        return totalClaimedAmount;
+    }
+
 
     function pause() external onlyOwner {
         paused = true;

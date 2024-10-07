@@ -4,7 +4,7 @@ const { ethers } = require("hardhat");
 const { StandardMerkleTree } = require("@openzeppelin/merkle-tree");
 
 describe("Airdrop", function () {
-    let Airdrop, airdrop, owner, addr1, addr2, addr3, addr4, addr5, addr6, merkleRoot, whitelist_values, tree, token;
+    let Airdrop, airdrop, owner, addr1, addr2, addr3, addr4, addr5, addr6, merkleRoot, whitelist_values, tree, token, airdropAddr;
 
     beforeEach(async function () {
 
@@ -39,14 +39,14 @@ describe("Airdrop", function () {
         Airdrop = await ethers.getContractFactory("Airdrop");
         airdrop = await Airdrop.deploy(merkleRoot, tokenAddr);
         await airdrop.waitForDeployment();
-        const AirdropAddr = await airdrop.getAddress();
-        console.log('Airdrop deployed to:', AirdropAddr);
+        airdropAddr = await airdrop.getAddress();
+        console.log('Airdrop deployed to:', airdropAddr);
 
         // Transfer tokens to the airdrop contract
-        await token.transfer(AirdropAddr, 100000);
+        await token.transfer(airdropAddr, 100000);
 
         // Check the balance of the airdrop contract
-        console.log('Airdrop balance:', await token.balanceOf(AirdropAddr));
+        console.log('Airdrop balance:', await token.balanceOf(airdropAddr));
     });
 
     it("Should allow a valid claim", async function () {
@@ -63,7 +63,7 @@ describe("Airdrop", function () {
         }
 
         // Claim the tokens
-        const totalAmount = whitelist_values[3][1];
+        const totalAmount = whitelist_values[2][1];
         await airdrop.connect(addr3).claim(proof, totalAmount, totalAmount);
 
         // Check the balance of the user
@@ -85,7 +85,7 @@ describe("Airdrop", function () {
         }
 
         // Claim the tokens
-        const totalAmount = whitelist_values[3][1];
+        const totalAmount = whitelist_values[2][1];
         const partialAmount = totalAmount / 2;
         await airdrop.connect(addr3).claim(proof, totalAmount, partialAmount);
 
@@ -115,7 +115,7 @@ describe("Airdrop", function () {
         }
 
         // Claim the tokens
-        const totalAmount = whitelist_values[3][1];
+        const totalAmount = whitelist_values[2][1];
         const invalidAmount = totalAmount * 2;
         await expect(airdrop.connect(addr3).claim(proof, totalAmount, invalidAmount)).to.be.revertedWith("Partial amount is greater than total amount");
     });
@@ -137,7 +137,7 @@ describe("Airdrop", function () {
         }
 
         // Claim the tokens
-        const totalAmount = whitelist_values[3][1];
+        const totalAmount = whitelist_values[2][1];
         await expect(airdrop.connect(addr3).claim(proof, totalAmount, totalAmount)).to.be.revertedWith("Contract is paused");
     });
 
@@ -167,7 +167,7 @@ describe("Airdrop", function () {
 
 
         // Claim the tokens
-        const totalAmount = whitelist_values[3][1];
+        const totalAmount = whitelist_values[2][1];
         await expect(airdrop.connect(addr3).claim(proof, totalAmount, totalAmount)).to.be.revertedWith("Invalid Merkle proof");
     });
 
@@ -180,4 +180,82 @@ describe("Airdrop", function () {
 
         await expect(airdrop.connect(addr1).claim(invalidProof, totalAmount, partialAmount)).to.be.revertedWith("Invalid Merkle proof");
     });
+
+    it("Should return total claimed amount", async function () {
+        // Test with addr3 and addr2
+        console.log("Valid claim user address:", addr3.address);
+        console.log("Valid claim user address:", addr1.address);
+
+
+        // Get the proof for the user
+        let proof;
+        for (const [i, v] of tree.entries()) {
+            if (v[0] === addr3.address) {
+                proof = tree.getProof(i);
+            }
+        }
+        let proof2;
+        for (const [i, v] of tree.entries()) {
+            if (v[0] === addr1.address) {
+                console.log(v[0]);
+                console.log(v[1]);
+                proof2 = tree.getProof(i);
+                console.log(proof2);
+            }
+        }
+
+        // Claim the tokens
+        const totalAmount2 = whitelist_values[0][1];
+        console.log(totalAmount2);
+        await airdrop.connect(addr1).claim(proof2, totalAmount2, totalAmount2);
+        const totalAmount = whitelist_values[2][1];
+        await airdrop.connect(addr3).claim(proof, totalAmount, totalAmount);
+
+
+        // Check the balance of the user
+        console.log('User balance:', await token.balanceOf(addr3.address));
+        expect(await token.balanceOf(addr3.address)).to.equal(totalAmount);
+        console.log('User balance:', await token.balanceOf(addr1.address));
+        expect(await token.balanceOf(addr1.address)).to.equal(totalAmount2);
+
+        // Check the total claimed amount
+        const totalClaimedAmount = await airdrop.getTotalClaimedAmount();
+        console.log('Total claimed amount:', totalClaimedAmount);
+
+        // convert to integer and perform sum
+        const expectedTotalClaimedAmount = parseInt(totalAmount) + parseInt(totalAmount2);
+
+        expect(totalClaimedAmount).to.equal(expectedTotalClaimedAmount);
+    });
+    /*
+    it("Should return the logged claims", async function () {
+
+        // Test with addr3
+        console.log("Valid claim user address:", addr3.address);
+
+        // Get the proof for the user
+        let proof;
+        for (const [i, v] of tree.entries()) {
+            if (v[0] === addr3.address) {
+                proof = tree.getProof(i);
+            }
+        }
+
+        // Claim the tokens
+        const totalAmount = whitelist_values[2][1];
+        await airdrop.connect(addr3).claim(proof, totalAmount, totalAmount);
+
+        // Check the balance of the user
+        console.log('User balance:', await token.balanceOf(addr3.address));
+        expect(await token.balanceOf(addr3.address)).to.equal(totalAmount);
+
+        console.log(airdropAddr);
+        const claimedEvents = await token.connect(addr3).filters.Transfer(airdropAddr);
+        console.log(JSON.stringify(claimedEvents));
+
+
+        // expect that claimed events is not null
+        expect(claimedEvents).to.not.be.null;
+    });
+    */
 });
