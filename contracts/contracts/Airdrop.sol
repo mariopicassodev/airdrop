@@ -55,6 +55,9 @@ contract Airdrop is Ownable {
         return totalClaimedAmount;
     }
 
+    function getPasued() public view returns (bool) {
+        return paused;
+    }
 
     function pause() external onlyOwner {
         paused = true;
