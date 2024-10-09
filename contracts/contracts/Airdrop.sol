@@ -3,11 +3,13 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
-contract Airdrop is Ownable {
-    bytes32 private merkleRoot;
-    bool private paused;
-    mapping(address => uint256) public withdrawnAmount;
+
+contract Airdrop is Ownable, Pausable {
+    bytes32 public merkleRoot;
+
+    mapping(address => uint256) public claimedAmount;
     IERC20 public token;
     uint256 public totalClaimedAmount;
     event Claimed(address indexed account, uint256 amount);
@@ -15,56 +17,47 @@ contract Airdrop is Ownable {
     constructor(bytes32 _merkleRoot, address _tokenAddress) Ownable(msg.sender) {
         merkleRoot = _merkleRoot;
         token = IERC20(_tokenAddress);
-        paused = false;
     }
 
-    function claim(bytes32[] calldata merkleProof, uint256 totalAmount, uint256 partialAmount) whenNotPaused public {
+    function claim(bytes32[] calldata merkleProof, uint256 claimableAmount, uint256 claimAmount) whenNotPaused public {
 
-        // Verify that partialAmount is less than totalAmount
-        require(partialAmount <= totalAmount, "Partial amount is greater than total amount");
+        // Verify that claimAmount is less than claimableAmount
+        require(claimAmount <= claimableAmount, "Partial amount is greater than total amount");
 
         // Verify the Merkle proof
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, totalAmount))));
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, claimableAmount))));
         require(verify(merkleProof, merkleRoot, leaf), "Invalid Merkle proof");
 
         // Now the total amount and the addr are verified.
         // Calculate remaining amount to claim
-        uint256 remainingAmount = totalAmount - withdrawnAmount[msg.sender];
-        require(partialAmount <= remainingAmount, "Partial amount is greater than remaining amount");
+        uint256 remainingAmount = claimableAmount - claimedAmount[msg.sender];
+        require(claimAmount <= remainingAmount, "Partial amount is greater than remaining amount");
         require(remainingAmount > 0, "No more tokens to claim");
 
         // Update the withdrawal record
-        withdrawnAmount[msg.sender] += partialAmount;
-
-        // Transfer the ERC-20 tokens
-        require(token.transfer(msg.sender, partialAmount), "Token transfer failed");
+        claimedAmount[msg.sender] += claimAmount;
 
         // Save the total claimed amount
-        totalClaimedAmount += partialAmount;
+        totalClaimedAmount += claimAmount;
 
-        emit Claimed(msg.sender, partialAmount);
+        // Transfer the ERC-20 tokens
+        require(token.transfer(msg.sender, claimAmount), "Token transfer failed");
+
+        emit Claimed(msg.sender, claimAmount);
+    }
+
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     function getClaimedAmount(address _address) public view returns (uint256) {
-        return withdrawnAmount[_address];
-    }
-
-
-    // Function to get the sum of claimed tokens
-    function getTotalClaimedAmount() public view returns (uint256) {
-        return totalClaimedAmount;
-    }
-
-    function getPasued() public view returns (bool) {
-        return paused;
-    }
-
-    function pause() external onlyOwner {
-        paused = true;
-    }
-
-    function resume() external onlyOwner {
-        paused = false;
+        return claimedAmount[_address];
     }
 
     function updateMerkleRoot(bytes32 newRoot) external onlyOwner {
@@ -90,17 +83,5 @@ contract Airdrop is Ownable {
 
     function _hashPair(bytes32 a, bytes32 b) private pure returns (bytes32) {
         return a < b ? keccak256(abi.encode(a, b)) : keccak256(abi.encode(b, a));
-    }
-
-    // MODIFIERS
-
-    modifier whenNotPaused() {
-        require(!paused, "Contract is paused");
-        _;
-    }
-
-    modifier whenPaused() {
-        require(paused, "Contract is not paused");
-        _;
     }
 }

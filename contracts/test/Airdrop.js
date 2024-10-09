@@ -138,7 +138,7 @@ describe("Airdrop", function () {
 
         // Claim the tokens
         const totalAmount = whitelist_values[2][1];
-        await expect(airdrop.connect(addr3).claim(proof, totalAmount, totalAmount)).to.be.revertedWith("Contract is paused");
+        await expect(airdrop.connect(addr3).claim(proof, totalAmount, totalAmount)).to.be.reverted;
     });
 
     it("Should reject a claim with invalid proof", async function () {
@@ -219,7 +219,7 @@ describe("Airdrop", function () {
         expect(await token.balanceOf(addr1.address)).to.equal(totalAmount2);
 
         // Check the total claimed amount
-        const totalClaimedAmount = await airdrop.getTotalClaimedAmount();
+        const totalClaimedAmount = await airdrop.totalClaimedAmount();
         console.log('Total claimed amount:', totalClaimedAmount);
 
         // convert to integer and perform sum
