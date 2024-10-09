@@ -6,7 +6,7 @@ import { getProofAndTotalAmount } from '@/utils/merkle-tree';
 
 
 
-const useClaimAirdrop = (airdropAddress) => {
+const useClaimAirdrop = () => {
     const [claiming, setClaiming] = useState(false);
     const [claimError, setClaimError] = useState(null);
     const [claimSuccess, setClaimSuccess] = useState(false);

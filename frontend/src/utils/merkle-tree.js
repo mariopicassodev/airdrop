@@ -26,3 +26,12 @@ export function getProofAndTotalAmount(account) {
     }
     return { proof, totalAmount };
 }
+
+export function getTotalAvaibleAmount(){
+    const tree = StandardMerkleTree.load(merkleTreeJSON);
+    let totalAmount = 0;
+    for (const [i, v] of tree.entries()) {
+        totalAmount += v[1];
+    }
+    return totalAmount;
+}
