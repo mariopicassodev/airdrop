@@ -12,7 +12,7 @@ const useIsPaused = (pauseUpdated) => {
             try {
                 const provider = new ethers.BrowserProvider(window.ethereum);
                 const airdropContract = new ethers.Contract(addresses.airdrop, airdropJSON.abi, provider);
-                const isPaused = await airdropContract.getPaused();
+                const isPaused = await airdropContract.paused();
                 console.log("isPaused: " + isPaused);
                 setIsPaused(isPaused);
             }
@@ -26,3 +26,6 @@ const useIsPaused = (pauseUpdated) => {
 
     return isPaused;
 }
+
+
+export default useIsPaused;

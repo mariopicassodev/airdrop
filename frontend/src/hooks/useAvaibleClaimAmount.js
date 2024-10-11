@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import localAddresses from '../contracts-data/local-addresses.json';
 import airdropJSON from '../contracts-data/Airdrop.json';
-import { getProofAndTotalAmount } from "@/utils/merkle-tree";
+import { getProofAndClaimableAmount } from "@/utils/merkle-tree";
 import { NO_MATCHING_ACCOUNT_ERROR } from "@/utils/constants";
 
 
@@ -21,7 +21,7 @@ const useAvaibleClaimAmount = (account, balanceUpdated) => {
                 const claimedAmount = await airdropContract.getClaimedAmount(account);
 
 
-                const { proof, totalAmount } = getProofAndTotalAmount(account);
+                const { proof, totalAmount } = getProofAndClaimableAmount(account);
 
                 // Convert claimedAmount and totalAmount to BigInt
                 const claimedAmountBigInt = BigInt(claimedAmount.toString());

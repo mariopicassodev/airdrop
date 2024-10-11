@@ -9,7 +9,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
     return (
         <html lang="en">
-            <body style={{ overflow: 'hidden' }}>
+            <body>
                 <AppProvider>{children}</AppProvider>
             </body>
         </html>

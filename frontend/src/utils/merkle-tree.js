@@ -3,7 +3,7 @@ import merkleTreeJSON from "../contracts-data/local-whitelist-tree.json"
 import { NO_MATCHING_ACCOUNT_ERROR } from "@/utils/constants";
 
 
-export function getProofAndTotalAmount(account) {
+export function getProofAndClaimableAmount(account) {
     let proof;
     let totalAmount;
     const tree = StandardMerkleTree.load(merkleTreeJSON);
@@ -27,11 +27,12 @@ export function getProofAndTotalAmount(account) {
     return { proof, totalAmount };
 }
 
-export function getTotalAvaibleAmount(){
+export function getTotalClaimableAmount(){
     const tree = StandardMerkleTree.load(merkleTreeJSON);
-    let totalAmount = 0;
+    let totalClaimableAmount = 0;
     for (const [i, v] of tree.entries()) {
-        totalAmount += v[1];
+
+        totalClaimableAmount += Number(v[1]);
     }
-    return totalAmount;
+    return totalClaimableAmount;
 }

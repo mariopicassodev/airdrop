@@ -3,16 +3,15 @@ import { ethers } from 'ethers';
 import addresses from '../contracts-data/local-addresses.json';
 import airdropJSON from '../contracts-data/Airdrop.json';
 
+const useUnpause = () => {
+    const [unpausing, setUnpausing] = useState(false);
+    const [unpauseError, setUnpauseError] = useState(null);
+    const [unpauseSuccess, setUnpauseSuccess] = useState(false);
 
-const usePause = () => {
-    const [pausing, setPausing] = useState(false);
-    const [pauseError, setPauseError] = useState(null);
-    const [pauseSuccess, setPauseSuccess] = useState(false);
-
-    const pause = async () => {
-        setPauseError(null);
-        setPauseSuccess(false);
-        setPausing(true);
+    const unpause = async () => {
+        setUnpauseError(null);
+        setUnpauseSuccess(false);
+        setUnpausing(true);
 
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
@@ -21,9 +20,9 @@ const usePause = () => {
             const airdropContract = new ethers.Contract(addresses.airdrop, airdropJSON.abi, provider);
             const airdropContractWithSigner = airdropContract.connect(signer);
 
-            const tx = await airdropContractWithSigner.pause();
+            const tx = await airdropContractWithSigner.unpause();
             await tx.wait();
-            setPauseSuccess(true);
+            setUnpauseSuccess(true);
         } catch (error) {
             console.error(error);
             let errorMessage;
@@ -34,16 +33,16 @@ const usePause = () => {
                 errorMessage = error?.revert?.args?.[0];
             }
             else {
-                errorMessage = 'An error occurred while pausing the airdrop';
+                errorMessage = 'An error occurred while unpausing the airdrop';
             }
 
-            setPauseError(errorMessage);
+            setUnpauseError(errorMessage);
         } finally {
-            setPausing(false);
+            setUnpausing(false);
         }
     };
 
-    return { pause, pausing, pauseError, pauseSuccess };
-};
+    return { unpause, unpausing, unpauseError, unpauseSuccess };
+}
 
-export default usePause;
+export default useUnpause;
