@@ -1,6 +1,5 @@
 import "./globals.css";
-import { Providers } from "./providers";
-import AppProvider from "./context/AppContext";
+import AppProvider from "../context/AppContext";
 
 export const metadata = {
     title: "Airdrop",
@@ -11,7 +10,7 @@ export default function RootLayout({ children }) {
     return (
         <html lang="en">
             <body>
-                <Providers>{children}</Providers>
+                <AppProvider>{children}</AppProvider>
             </body>
         </html>
     );
