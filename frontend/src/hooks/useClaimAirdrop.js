@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { ethers } from 'ethers';
 import addresses from '../contracts-data/local-addresses.json';
 import airdropJSON from '../contracts-data/Airdrop.json';
-import { getProofAndTotalAmount } from '@/utils/merkle-tree';
+import { getProofAndClaimableAmount } from '@/utils/merkle-tree';
 
 
 
-const useClaimAirdrop = (airdropAddress) => {
+const useClaimAirdrop = () => {
     const [claiming, setClaiming] = useState(false);
     const [claimError, setClaimError] = useState(null);
     const [claimSuccess, setClaimSuccess] = useState(false);
@@ -18,7 +18,7 @@ const useClaimAirdrop = (airdropAddress) => {
 
         try {
 
-            const { proof, totalAmount } = getProofAndTotalAmount(account);
+            const { proof, totalAmount } = getProofAndClaimableAmount(account);
 
             const provider = new ethers.BrowserProvider(window.ethereum);
             const signer = await provider.getSigner();
@@ -33,12 +33,16 @@ const useClaimAirdrop = (airdropAddress) => {
 
         } catch (error) {
             console.error(error);
+            console.log('Error:', error.data);
             let errorMessage;
             if (error?.code === "ACTION_REJECTED"){
                 return;
             }
             else if (error?.revert?.args?.[0]){
                 errorMessage = error?.revert?.args?.[0];
+            }
+            else if (error?.data === "0xd93c0665"){
+                errorMessage = 'Airdrop paused. Try again later';
             }
             else {
                 errorMessage = 'An error occurred while claiming the airdrop';

@@ -1,16 +1,13 @@
 require('dotenv').config();
+const fs = require('fs');
 const { ethers } = require('hardhat');
 const { StandardMerkleTree } = require("@openzeppelin/merkle-tree");
-
-
-
-/*------------------------------------------------ FIX --------------------------------------------------*/
-
+const whitelist = require('../data/test-testnet-whitelist.json');
 
 
 async function main() {
-    const provider = new ethers.getDefaultProvider(process.env.INFURA_URL);
-    const PRIVATE_KEY = process.env.PRIVATE_KEY;
+    const provider = new ethers.getDefaultProvider("https://holesky.infura.io/v3/ca37cec292f745d289c0f1b104088e94");
+    const PRIVATE_KEY = "601c5affd9520a243febeda9d40287ddb93b6bdbbb656b44dfc39d1e8c2045b7";
 
     console.log(`Private Key: ${PRIVATE_KEY}`);
 
@@ -23,37 +20,39 @@ async function main() {
     const Token = await ethers.getContractFactory("ERC20Mock", wallet);
     const token = await Token.deploy(name, symbol, wallet.address, initialBalance);
     await token.waitForDeployment();
-    const tokenAddr = token.address;
+    const tokenAddr = await token.getAddress();
     console.log('Token deployed to:', tokenAddr);
     console.log('Owner address:', wallet.address);
-    console.log('Token balance:', ethers.utils.formatUnits(await token.balanceOf(wallet.address), 18));
+    console.log('Token balance:', await token.balanceOf(wallet.address));
 
     // Build the merkle tree with a small whitelist
-    const whitelist_values = [
-        [wallet.address, "500"],
-        ["0xAddress2", "200"],
-        ["0xAddress3", "100"],
-        ["0xAddress4", "100"],
-        ["0xAddress5", "50"],
-        ["0xAddress6", "50"]
-    ];
-    const tree = StandardMerkleTree.of(whitelist_values, ["address", "uint256"]);
+    const tree = StandardMerkleTree.of(whitelist, ["address", "uint256"]);
     const merkleRoot = tree.root;
     console.log('Merkle Root:', merkleRoot);
+    fs.writeFileSync("./scripts/outputs/testnet-whitelist-tree.json", JSON.stringify(tree.dump()));
 
     // Deploy the Airdrop contract
     const Airdrop = await ethers.getContractFactory("Airdrop", wallet);
+    console.log('Deploying Airdrop contract...');
     const airdrop = await Airdrop.deploy(merkleRoot, tokenAddr);
     await airdrop.waitForDeployment();
-    console.log('Airdrop deployed to:', airdrop.address);
+    const airdropAddr = await airdrop.getAddress();
+    console.log('Airdrop deployed to:', airdropAddr);
+
+     // Write a json with the contract addresses
+     const addresses = {
+        token: tokenAddr,
+        airdrop: airdropAddr
+    };
+    fs.writeFileSync("./scripts/outputs/testnet-addresses.json", JSON.stringify(addresses));
 
     // Transfer tokens to the airdrop contract
-    const transferTx = await token.transfer(airdrop.address, initialBalance);
+    console.log('Transferring tokens to Airdrop contract...');
+    const nonce = await provider.getTransactionCount(wallet.address);
+    const transferTx = await token.transfer(airdropAddr, initialBalance, { nonce });
     await transferTx.wait();
     console.log('Tokens transferred to Airdrop contract');
 
-    // show a link to sepolia etherscan
-    console.log('https://sepolia.etherscan.io/address/' + airdrop.address);
 }
 
 main().catch((error) => {

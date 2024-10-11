@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import bcrypt from 'bcrypt';
+import config from "@/config.json"
 
 
 export async function POST(request) {
@@ -17,11 +19,23 @@ export async function POST(request) {
             );
         }
 
-        const passwordHash = process.env.PASSWORD_HASH;
+        const passwordHash = config.pass
 
+        const isUserValid = data.username === config.user;
         const isPasswordValid = await bcrypt.compare(data.password, passwordHash);
 
-        if (!isPasswordValid) {
+        if (!isUserValid) {
+            return NextResponse.json(
+                {
+                    message: "Invalid username",
+                },
+                {
+                    status: 400,
+                }
+            );
+        }
+
+        if (!isPasswordValid ) {
             return NextResponse.json(
                 {
                     message: "Invalid password",
@@ -32,10 +46,15 @@ export async function POST(request) {
             );
         }
 
+        // Encrypt with bcrypt and Set server side Cookies
+
+        const encryptedSessionData = await bcrypt.hash(data.username + data.password, 10);
+        const oneDay = 24 * 60 * 60 * 1000
+        cookies().set('session', encryptedSessionData, { expires: Date.now() + oneDay });
+
         return NextResponse.json(
             {
                 message: "User logged in",
-                token: token,
             },
             {
                 status: 200,
@@ -43,6 +62,7 @@ export async function POST(request) {
         );
     }
     catch (error) {
+        console.error(error);
         return NextResponse.json(
             {
                 message: error.message,
