@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import addresses from '../contracts-data/local-addresses.json';
+import addresses from '../contracts-data/testnet-addresses.json';
 import airdropJSON from '../contracts-data/Airdrop.json';
 
 const useGetLastClaims = () => {
@@ -10,13 +10,12 @@ const useGetLastClaims = () => {
     useEffect(() => {
         const getClaims = async () => {
             try {
-                const provider = new ethers.getDefaultProvider("https://holesky.infura.io/v3/ca37cec292f745d289c0f1b104088e94");
+                const provider = new ethers.BrowserProvider(window.ethereum);
                 const airdropContract = new ethers.Contract(addresses.airdrop, airdropJSON.abi, provider);
-                console.log("ACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
                 const filterClaimed = await airdropContract.filters.Claimed();
-                const events = await airdropContract.queryFilter(filterClaimed, 2510415, 'latest');
-                console.log("EVENTS");
-                console.log(events);
+                const events = await airdropContract.queryFilter(filterClaimed, 2510415, 'latest'); // From contract deployment to latest block
+
                 const claims = events.map((event) => ({
                     account: event.args[0],
                     amount: event.args.amount.toString(),

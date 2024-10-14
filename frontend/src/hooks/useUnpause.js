@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
-import addresses from '../contracts-data/local-addresses.json';
+import addresses from '../contracts-data/testnet-addresses.json';
 import airdropJSON from '../contracts-data/Airdrop.json';
 
 const useUnpause = () => {
@@ -16,10 +16,8 @@ const useUnpause = () => {
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
             const signer = await provider.getSigner();
-
             const airdropContract = new ethers.Contract(addresses.airdrop, airdropJSON.abi, provider);
             const airdropContractWithSigner = airdropContract.connect(signer);
-
             const tx = await airdropContractWithSigner.unpause();
             await tx.wait();
             setUnpauseSuccess(true);

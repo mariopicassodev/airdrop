@@ -1,5 +1,5 @@
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
-import merkleTreeJSON from "../contracts-data/local-whitelist-tree.json"
+import merkleTreeJSON from "../contracts-data/testnet-whitelist-tree.json"
 import { NO_MATCHING_ACCOUNT_ERROR } from "@/utils/constants";
 
 
@@ -11,8 +11,6 @@ export function getProofAndClaimableAmount(account) {
     for (const [i, v] of tree.entries()) {
         if (v[0].toLowerCase() === account.toLowerCase()) {
             proof = tree.getProof(i);
-            console.log('Value:', v);
-            console.log('Proof:', proof);
             totalAmount = v[1];
             break;
         }

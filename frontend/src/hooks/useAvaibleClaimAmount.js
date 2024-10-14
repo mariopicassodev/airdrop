@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import localAddresses from '../contracts-data/local-addresses.json';
+import localAddresses from '../contracts-data/testnet-addresses.json';
 import airdropJSON from '../contracts-data/Airdrop.json';
 import { getProofAndClaimableAmount } from "@/utils/merkle-tree";
 import { NO_MATCHING_ACCOUNT_ERROR } from "@/utils/constants";
@@ -20,18 +20,14 @@ const useAvaibleClaimAmount = (account, balanceUpdated) => {
                 const airdropContract = new ethers.Contract(localAddresses.airdrop, airdropJSON.abi, provider);
                 const claimedAmount = await airdropContract.getClaimedAmount(account);
 
-
                 const { proof, totalAmount } = getProofAndClaimableAmount(account);
 
                 // Convert claimedAmount and totalAmount to BigInt
                 const claimedAmountBigInt = BigInt(claimedAmount.toString());
                 const totalAmountBigInt = BigInt(totalAmount.toString());
 
-                console.log(claimedAmountBigInt, totalAmountBigInt)
-
                 // Perform arithmetic operation using BigInt
                 const avaibleAmountBigInt = totalAmountBigInt - claimedAmountBigInt;
-                console.log("avaible ammount: " + avaibleAmountBigInt);
 
                 // Convert avaibleAmountBigInt to string before setting state
                 setAvaibleAmount(avaibleAmountBigInt.toString());
