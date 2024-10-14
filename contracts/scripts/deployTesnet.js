@@ -6,8 +6,8 @@ const whitelist = require('../data/test-testnet-whitelist.json');
 
 
 async function main() {
-    const provider = new ethers.getDefaultProvider("https://holesky.infura.io/v3/ca37cec292f745d289c0f1b104088e94");
-    const PRIVATE_KEY = "601c5affd9520a243febeda9d40287ddb93b6bdbbb656b44dfc39d1e8c2045b7";
+    const provider = new ethers.getDefaultProvider(process.env.INFURA_HOLESKY_PROVIDER);
+    const PRIVATE_KEY = process.env.PRIVATE_KEY_HOLESKY;
 
     console.log(`Private Key: ${PRIVATE_KEY}`);
 

@@ -5,7 +5,7 @@ const { StandardMerkleTree } = require("@openzeppelin/merkle-tree");
 const whitelist = require('../data/test-local-whitelist.json');
 
 async function main() {
-    const provider = new ethers.getDefaultProvider("http://127.0.0.1:8545");
+    const provider = new ethers.getDefaultProvider(process.env.LOCAL_PROVIDER);
     const privkey = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
     const wallet = new ethers.Wallet(privkey, provider);
 
